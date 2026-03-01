@@ -570,6 +570,7 @@
       <div class="header-top">
         <h1 class="app-title">PÁDEL</h1>
         <span class="app-subtitle">Torneo</span>
+        <button id="reset-all-btn" title="Reiniciar todo" style="margin-left:auto;background:none;border:1px solid rgba(255,82,82,0.25);color:rgba(255,82,82,0.5);font-family:var(--font-body);font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:0.3rem 0.75rem;border-radius:999px;cursor:pointer;transition:border-color 0.2s,color 0.2s;">↺ Reiniciar</button>
       </div>
       <nav class="tab-nav" role="tablist" aria-label="Secciones">
         <button class="tab-btn active" data-tab="leaderboard" role="tab" aria-selected="true">Clasificación</button>
@@ -997,6 +998,16 @@
       selectedWinner = null;
       document.getElementById('win-team1').classList.remove('selected');
       document.getElementById('win-team2').classList.remove('selected');
+    });
+
+    // ── RESET ALL ──────────────────────────────────────────────
+    document.getElementById('reset-all-btn').addEventListener('click', () => {
+      const ok = window.confirm('¿Reiniciar todo el torneo? Se borrarán todos los jugadores, rondas y partidos. Esta acción no se puede deshacer.');
+      if (!ok) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state = defaultState();
+      selectedWinner = null;
+      renderAll();
     });
 
     // ── INIT ───────────────────────────────────────────────────

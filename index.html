@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Torneo de Pádel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a0a;
+      --surface:     #141414;
+      --surface2:    #1e1e1e;
+      --border:      rgba(255,255,255,0.08);
+      --text:        #f5f5f5;
+      --text-muted:  rgba(255,255,255,0.4);
+      --accent:      #00b4d8;
+      --accent-dim:  rgba(0,180,216,0.15);
+      --accent-glow: rgba(0,180,216,0.3);
+      --accent-hover:#00cff5;
+      --win-color:   #00e676;
+      --loss-color:  #ff5252;
+      --font-display:'Bebas Neue', sans-serif;
+      --font-body:   'DM Sans', sans-serif;
+      --header-h:    112px;
+      --max-w:       760px;
+      --radius:      10px;
+      --radius-sm:   6px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+    }
+
+    /* Ambient glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 0%,
+        rgba(0,180,216,0.07) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── APP SHELL ─────────────────────────────── */
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ────────────────────────────────── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.25rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.9rem 0 0.5rem;
+    }
+
+    .app-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .app-subtitle {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding-top: 2px;
+    }
+
+    /* ── TAB NAV ───────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      padding: 0.65rem 1.1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .tab-btn:hover  { color: var(--text); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── MAIN CONTENT ──────────────────────────── */
+    .tab-content {
+      flex: 1;
+      max-width: var(--max-w);
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── SECTION HEADER ────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+
+    /* ── BUTTONS ───────────────────────────────── */
+    .primary-btn {
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 1.4rem;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .primary-btn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .primary-btn:active { transform: scale(0.97); }
+    .primary-btn.small  { padding: 0.45rem 1rem; font-size: 0.78rem; }
+
+    .danger-btn {
+      background: none;
+      border: 1px solid rgba(255,82,82,0.3);
+      color: rgba(255,82,82,0.6);
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .danger-btn:hover {
+      border-color: var(--loss-color);
+      color: var(--loss-color);
+      background: rgba(255,82,82,0.08);
+    }
+
+    /* ── FORMS ─────────────────────────────────── */
+    .text-input, .player-select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      padding: 0.55rem 0.85rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .text-input:focus, .player-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .player-select option {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .error-msg {
+      font-size: 0.8rem;
+      color: var(--loss-color);
+      margin-top: 0.5rem;
+      min-height: 1.2em;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      padding: 2.5rem 1rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* ── CARDS ─────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+
+    /* ── LEADERBOARD ───────────────────────────── */
+    .lb-header, .lb-row {
+      display: grid;
+      grid-template-columns: 3rem 1fr 3.5rem 3.5rem 4.5rem;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.7rem 1rem;
+    }
+
+    .lb-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .lb-row {
+      border-radius: var(--radius-sm);
+      transition: background 0.15s;
+      cursor: default;
+    }
+    .lb-row:hover { background: var(--surface2); }
+
+    .lb-pos {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .lb-pos.gold   { color: #ffd700; }
+    .lb-pos.silver { color: #c0c0c0; }
+    .lb-pos.bronze { color: #cd7f32; }
+
+    .lb-name {
+      font-weight: 600;
+      font-size: 0.92rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .lb-stat {
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .lb-stat.wins  { color: var(--win-color); font-weight: 600; }
+    .lb-stat.loss  { color: var(--loss-color); }
+
+    .lb-pts {
+      text-align: right;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    /* ── MATCH ENTRY ───────────────────────────── */
+    .match-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .team-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+
+    .team-label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .team-selectors {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .vs-divider {
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      padding: 0.25rem 0;
+    }
+
+    .round-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .winner-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .winner-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .winner-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.65rem 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+      text-align: center;
+    }
+    .winner-btn:hover {
+      border-color: rgba(255,255,255,0.25);
+      color: var(--text);
+    }
+    .winner-btn.selected {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    /* ── ROUNDS ────────────────────────────────── */
+    .round-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .round-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .round-name {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      color: var(--text);
+    }
+
+    .round-match-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .round-matches {
+      padding: 0.5rem 0;
+    }
+
+    .match-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .match-row:last-child { border-bottom: none; }
+
+    .match-team {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .match-team.winner { color: var(--text); }
+    .match-team.right  { text-align: right; }
+
+    .match-badge {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.2rem 0.65rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .match-badge.win { color: var(--win-color); border-color: rgba(0,230,118,0.3); }
+
+    .round-empty {
+      padding: 1rem 1.25rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── PLAYERS ───────────────────────────────── */
+    .add-player-form {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      align-items: flex-start;
+    }
+    .add-player-form .text-input { flex: 1; }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .player-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .player-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .player-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .player-name-text {
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .player-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem;
+    }
+
+    .stat-chip {
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem 0.4rem;
+      text-align: center;
+    }
+
+    .stat-chip-value {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      line-height: 1;
+      color: var(--text);
+    }
+    .stat-chip-value.pts { color: var(--accent); }
+    .stat-chip-value.win { color: var(--win-color); }
+    .stat-chip-value.loss { color: var(--loss-color); }
+
+    .stat-chip-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── RESPONSIVE ────────────────────────────── */
+    @media (max-width: 480px) {
+      .tab-btn        { font-size: 0.7rem; padding: 0.55rem 0.75rem; }
+      .team-selectors { grid-template-columns: 1fr; }
+      .winner-btns    { grid-template-columns: 1fr; }
+      .lb-header, .lb-row {
+        grid-template-columns: 2.5rem 1fr 3rem 3rem 4rem;
+        padding: 0.6rem 0.75rem;
+      }
+      .lb-pts         { font-size: 1.25rem; }
+      .players-grid   { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+
+    <!-- ── HEADER ─────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-top">
+        <h1 class="app-title">PÁDEL</h1>
+        <span class="app-subtitle">Torneo</span>
+      </div>
+      <nav class="tab-nav" role="tablist" aria-label="Secciones">
+        <button class="tab-btn active" data-tab="leaderboard" role="tab" aria-selected="true">Clasificación</button>
+        <button class="tab-btn" data-tab="match-entry"  role="tab" aria-selected="false">Registrar Partido</button>
+        <button class="tab-btn" data-tab="rounds"       role="tab" aria-selected="false">Rondas</button>
+        <button class="tab-btn" data-tab="players"      role="tab" aria-selected="false">Jugadores</button>
+      </nav>
+    </header>
+
+    <!-- ── TAB PANELS ─────────────────────────── -->
+    <main class="tab-content">
+
+      <!-- 1. CLASIFICACIÓN -->
+      <section id="tab-leaderboard" class="tab-panel active" role="tabpanel">
+        <div class="section-header">
+          <h2 class="section-title">Clasificación</h2>
+        </div>
+        <div class="lb-header">
+          <span style="text-align:center">#</span>
+          <span>Jugador</span>
+          <span style="text-align:center">V</span>
+          <span style="text-align:center">D</span>
+          <span style="text-align:right">Pts</span>
+        </div>
+        <div id="leaderboard-list"></div>
+      </section>
+
+      <!-- 2. REGISTRAR PARTIDO -->
+      <section id="tab-match-entry" class="tab-panel" role="tabpanel">
+        <div class="section-header">
+          <h2 class="section-title">Registrar Partido</h2>
+        </div>
+        <form id="match-form" class="match-form" novalidate>
+
+          <div class="team-block">
+            <span class="team-label">Equipo 1</span>
+            <div class="team-selectors">
+              <div>
+                <label class="field-label" for="t1p1">Jugador A</label>
+                <select id="t1p1" class="player-select"><option value="">— Seleccionar —</option></select>
+              </div>
+              <div>
+                <label class="field-label" for="t1p2">Jugador B</label>
+                <select id="t1p2" class="player-select"><option value="">— Seleccionar —</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="vs-divider">VS</div>
+
+          <div class="team-block">
+            <span class="team-label">Equipo 2</span>
+            <div class="team-selectors">
+              <div>
+                <label class="field-label" for="t2p1">Jugador C</label>
+                <select id="t2p1" class="player-select"><option value="">— Seleccionar —</option></select>
+              </div>
+              <div>
+                <label class="field-label" for="t2p2">Jugador D</label>
+                <select id="t2p2" class="player-select"><option value="">— Seleccionar —</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="round-row">
+            <label class="field-label" for="round-select">Ronda</label>
+            <select id="round-select" class="player-select"><option value="">— Seleccionar ronda —</option></select>
+          </div>
+
+          <div class="winner-row">
+            <span class="field-label">Ganador</span>
+            <div class="winner-btns">
+              <button type="button" class="winner-btn" id="win-team1" data-winner="1">Gana Equipo 1</button>
+              <button type="button" class="winner-btn" id="win-team2" data-winner="2">Gana Equipo 2</button>
+            </div>
+          </div>
+
+          <button type="submit" class="primary-btn">Guardar Partido</button>
+          <p id="match-error" class="error-msg" role="alert" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <!-- 3. RONDAS -->
+      <section id="tab-rounds" class="tab-panel" role="tabpanel">
+        <div class="section-header">
+          <h2 class="section-title">Rondas</h2>
+          <button id="add-round-btn" class="primary-btn small">+ Nueva Ronda</button>
+        </div>
+        <div id="rounds-list"></div>
+      </section>
+
+      <!-- 4. JUGADORES -->
+      <section id="tab-players" class="tab-panel" role="tabpanel">
+        <div class="section-header">
+          <h2 class="section-title">Jugadores</h2>
+        </div>
+        <form id="add-player-form" class="add-player-form" novalidate>
+          <input id="player-name-input" type="text" class="text-input"
+            placeholder="Nombre del jugador" autocomplete="off" maxlength="40" />
+          <button type="submit" class="primary-btn">Agregar</button>
+        </form>
+        <p id="player-error" class="error-msg" role="alert" aria-live="polite"></p>
+        <div id="players-list" class="players-grid"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ── UTILITIES ──────────────────────────────────────────────
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    // ── STATE ──────────────────────────────────────────────────
+    const STORAGE_KEY = 'paddle-tournament-v1';
+
+    function defaultState() {
+      return { players: [], rounds: [], matches: [] };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.players) &&
+              Array.isArray(parsed.rounds) &&
+              Array.isArray(parsed.matches)) {
+            return parsed;
+          }
+        }
+      } catch(e) { console.warn('Error leyendo localStorage:', e); }
+      return defaultState();
+    }
+
+    function saveState() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+      catch(e) { console.warn('Error guardando en localStorage:', e); }
+    }
+
+    let state = loadState();
+
+    // ── DERIVED HELPERS ────────────────────────────────────────
+    function playerById(id) { return state.players.find(p => p.id === id); }
+    function playerName(id) {
+      const p = playerById(id);
+      return p ? p.name : 'Desconocido';
+    }
+    function sortedLeaderboard() {
+      return [...state.players].sort((a, b) =>
+        b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+    }
+    function matchesForRound(roundId) {
+      return state.matches.filter(m => m.roundId === roundId);
+    }
+    function playerInAnyMatch(playerId) {
+      return state.matches.some(m =>
+        m.team1.includes(playerId) || m.team2.includes(playerId));
+    }
+
+    // ── MUTATIONS ──────────────────────────────────────────────
+    function addPlayer(name) {
+      const trimmed = name.trim();
+      if (!trimmed) return 'Por favor ingresá un nombre.';
+      if (state.players.some(p => p.name.toLowerCase() === trimmed.toLowerCase()))
+        return 'Ya existe un jugador con ese nombre.';
+      state.players.push({ id: uid(), name: trimmed, wins: 0, losses: 0, points: 0 });
+      saveState();
+      renderAll();
+      return null;
+    }
+
+    function deletePlayer(id) {
+      if (playerInAnyMatch(id)) {
+        const confirmDelete = window.confirm(
+          'Este jugador tiene partidos registrados. ¿Eliminar de todos modos?\n(Los partidos no se borrarán)');
+        if (!confirmDelete) return;
+      }
+      state.players = state.players.filter(p => p.id !== id);
+      saveState();
+      renderAll();
+    }
+
+    function addRound(name) {
+      const trimmed = (name || '').trim();
+      if (!trimmed) return;
+      state.rounds.push({ id: uid(), name: trimmed });
+      saveState();
+      renderAll();
+    }
+
+    let selectedWinner = null;
+
+    function recordMatch(roundId, team1, team2, winner) {
+      // Update player stats
+      const winTeam = winner === 1 ? team1 : team2;
+      const loseTeam = winner === 1 ? team2 : team1;
+      winTeam.forEach(id => {
+        const p = playerById(id);
+        if (p) { p.wins++; p.points = p.wins * 3; }
+      });
+      loseTeam.forEach(id => {
+        const p = playerById(id);
+        if (p) { p.losses++; }
+      });
+      state.matches.push({
+        id: uid(),
+        roundId,
+        team1,
+        team2,
+        winner,
+        timestamp: Date.now()
+      });
+      saveState();
+      renderAll();
+    }
+
+    // ── RENDER: LEADERBOARD ────────────────────────────────────
+    function renderLeaderboard() {
+      const list = document.getElementById('leaderboard-list');
+      const players = sortedLeaderboard();
+      if (!players.length) {
+        list.innerHTML = '<p class="empty-msg">Aún no hay jugadores. ¡Agregá jugadores en la pestaña Jugadores!</p>';
+        return;
+      }
+      list.innerHTML = players.map((p, i) => {
+        const rank = i + 1;
+        let posHtml, posClass = 'lb-pos';
+        if (rank === 1) { posHtml = '🥇'; posClass += ' gold'; }
+        else if (rank === 2) { posHtml = '🥈'; posClass += ' silver'; }
+        else if (rank === 3) { posHtml = '🥉'; posClass += ' bronze'; }
+        else posHtml = rank;
+        return `<div class="lb-row">
+          <span class="${posClass}" style="text-align:center">${posHtml}</span>
+          <span class="lb-name">${escHtml(p.name)}</span>
+          <span class="lb-stat wins" style="text-align:center">${p.wins}</span>
+          <span class="lb-stat loss" style="text-align:center">${p.losses}</span>
+          <span class="lb-pts">${p.points}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // ── RENDER: MATCH ENTRY SELECTS ────────────────────────────
+    function renderMatchEntrySelects() {
+      const opts = state.players.length
+        ? state.players.map(p => `<option value="${p.id}">${escHtml(p.name)}</option>`).join('')
+        : '';
+      const blank = '<option value="">— Seleccionar —</option>';
+      ['t1p1','t1p2','t2p1','t2p2'].forEach(id => {
+        document.getElementById(id).innerHTML = blank + opts;
+      });
+      const roundOpts = state.rounds.length
+        ? state.rounds.map(r => `<option value="${r.id}">${escHtml(r.name)}</option>`).join('')
+        : '';
+      document.getElementById('round-select').innerHTML =
+        '<option value="">— Seleccionar ronda —</option>' + roundOpts;
+    }
+
+    // ── RENDER: ROUNDS ─────────────────────────────────────────
+    function renderRounds() {
+      const el = document.getElementById('rounds-list');
+      if (!state.rounds.length) {
+        el.innerHTML = '<p class="empty-msg">No hay rondas aún. Creá una con "+ Nueva Ronda".</p>';
+        return;
+      }
+      el.innerHTML = state.rounds.map(r => {
+        const matches = matchesForRound(r.id);
+        const matchRows = matches.length
+          ? matches.map(m => {
+              const t1Names = m.team1.map(playerName).join(' / ');
+              const t2Names = m.team2.map(playerName).join(' / ');
+              const t1Win = m.winner === 1;
+              const t2Win = m.winner === 2;
+              return `<div class="match-row">
+                <div class="match-team ${t1Win ? 'winner' : ''}">${escHtml(t1Names)}</div>
+                <span class="match-badge ${t1Win || t2Win ? 'win' : ''}">${t1Win ? 'E1 Gana' : t2Win ? 'E2 Gana' : 'Pendiente'}</span>
+                <div class="match-team right ${t2Win ? 'winner' : ''}">${escHtml(t2Names)}</div>
+              </div>`;
+            }).join('')
+          : '<div class="round-empty">Sin partidos en esta ronda.</div>';
+        const matchLabel = matches.length === 1 ? '1 partido' : `${matches.length} partidos`;
+        return `<div class="round-card">
+          <div class="round-card-header">
+            <span class="round-name">${escHtml(r.name)}</span>
+            <span class="round-match-count">${matchLabel}</span>
+          </div>
+          <div class="round-matches">${matchRows}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── RENDER: PLAYERS ────────────────────────────────────────
+    function renderPlayers() {
+      const el = document.getElementById('players-list');
+      if (!state.players.length) {
+        el.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Aún no hay jugadores. ¡Agregá el primero!</p>';
+        return;
+      }
+      el.innerHTML = state.players.map(p => {
+        const initials = p.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        return `<div class="player-card">
+          <div class="player-card-top">
+            <div class="player-avatar">${escHtml(initials)}</div>
+            <span class="player-name-text">${escHtml(p.name)}</span>
+            <button class="danger-btn" data-action="delete-player" data-id="${p.id}" title="Eliminar jugador">✕</button>
+          </div>
+          <div class="player-stats">
+            <div class="stat-chip">
+              <div class="stat-chip-value win">${p.wins}</div>
+              <div class="stat-chip-label">Victorias</div>
+            </div>
+            <div class="stat-chip">
+              <div class="stat-chip-value loss">${p.losses}</div>
+              <div class="stat-chip-label">Derrotas</div>
+            </div>
+            <div class="stat-chip">
+              <div class="stat-chip-value pts">${p.points}</div>
+              <div class="stat-chip-label">Puntos</div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── RENDER ALL ─────────────────────────────────────────────
+    function renderAll() {
+      renderLeaderboard();
+      renderMatchEntrySelects();
+      renderRounds();
+      renderPlayers();
+    }
+
+    // ── TAB NAVIGATION ─────────────────────────────────────────
+    document.querySelector('.tab-nav').addEventListener('click', e => {
+      const btn = e.target.closest('.tab-btn');
+      if (!btn) return;
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+
+    // ── ADD PLAYER ─────────────────────────────────────────────
+    document.getElementById('add-player-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const input = document.getElementById('player-name-input');
+      const errEl = document.getElementById('player-error');
+      const err = addPlayer(input.value);
+      if (err) {
+        errEl.textContent = err;
+      } else {
+        errEl.textContent = '';
+        input.value = '';
+        input.focus();
+      }
+    });
+
+    // ── DELETE PLAYER (delegated) ───────────────────────────────
+    document.getElementById('players-list').addEventListener('click', e => {
+      const btn = e.target.closest('[data-action="delete-player"]');
+      if (!btn) return;
+      deletePlayer(btn.dataset.id);
+    });
+
+    // ── ADD ROUND ──────────────────────────────────────────────
+    document.getElementById('add-round-btn').addEventListener('click', () => {
+      const name = window.prompt('Nombre de la ronda (ej: Ronda 1, Semifinal…):');
+      if (name && name.trim()) addRound(name);
+    });
+
+    // ── WINNER TOGGLE ──────────────────────────────────────────
+    document.getElementById('win-team1').addEventListener('click', () => {
+      selectedWinner = 1;
+      document.getElementById('win-team1').classList.add('selected');
+      document.getElementById('win-team2').classList.remove('selected');
+    });
+    document.getElementById('win-team2').addEventListener('click', () => {
+      selectedWinner = 2;
+      document.getElementById('win-team2').classList.add('selected');
+      document.getElementById('win-team1').classList.remove('selected');
+    });
+
+    // ── RECORD MATCH ───────────────────────────────────────────
+    document.getElementById('match-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const errEl = document.getElementById('match-error');
+      const t1p1 = document.getElementById('t1p1').value;
+      const t1p2 = document.getElementById('t1p2').value;
+      const t2p1 = document.getElementById('t2p1').value;
+      const t2p2 = document.getElementById('t2p2').value;
+      const roundId = document.getElementById('round-select').value;
+
+      // Validation
+      if (!t1p1 || !t1p2 || !t2p1 || !t2p2) {
+        errEl.textContent = 'Por favor seleccioná los 4 jugadores.'; return;
+      }
+      if (!roundId) {
+        errEl.textContent = 'Por favor seleccioná una ronda. Podés crear una en la pestaña Rondas.'; return;
+      }
+      if (!selectedWinner) {
+        errEl.textContent = 'Por favor indicá qué equipo ganó.'; return;
+      }
+      const ids = [t1p1, t1p2, t2p1, t2p2];
+      if (new Set(ids).size < 4) {
+        errEl.textContent = 'Un jugador no puede aparecer más de una vez en el mismo partido.'; return;
+      }
+
+      errEl.textContent = '';
+      recordMatch(roundId, [t1p1, t1p2], [t2p1, t2p2], selectedWinner);
+
+      // Reset form
+      ['t1p1','t1p2','t2p1','t2p2'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('round-select').value = '';
+      selectedWinner = null;
+      document.getElementById('win-team1').classList.remove('selected');
+      document.getElementById('win-team2').classList.remove('selected');
+    });
+
+    // ── INIT ───────────────────────────────────────────────────
+    renderAll();
+  </script>
+</body>
+</html>
